@@ -44,6 +44,7 @@ export {
   checkApiReadiness,
   pollApiEnabled,
   isRetryableError,
+  backoffDelay,
 } from "./lifecycle/state-machine.js";
 export { InitState } from "./lifecycle/types.js";
 export type { InitContext } from "./lifecycle/types.js";
@@ -56,3 +57,6 @@ export { resolveStateDir, ensureStateDir, buildStackName } from "./state/local.j
 
 // CLI arg parsing (useful for plugin-level customization)
 export { parseSubcommand, parseInput, extractInput, requireConfirmDestroy } from "./cli/args.js";
+
+// Plugin config validation
+export { validatePluginConfig } from "./cli/validation.js";

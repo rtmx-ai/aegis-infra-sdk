@@ -15,6 +15,7 @@ import { runPreflight, enableApis, checkApiReadiness } from "../lifecycle/state-
 import { InitState } from "../lifecycle/types.js";
 import type { InitContext } from "../lifecycle/types.js";
 import { aggregateChecks } from "../health/aggregator.js";
+import { validatePluginConfig } from "./validation.js";
 
 /** Configuration passed to createPluginCli by the plugin author. */
 export interface PluginConfig {
@@ -54,6 +55,15 @@ function buildContext(
  */
 export async function createPluginCli(pluginConfig: PluginConfig): Promise<void> {
   const emitter = new StdoutEmitter();
+
+  // Validate config at registration time
+  const configError = validatePluginConfig(pluginConfig);
+  if (configError) {
+    emitter.emit({ type: "result", success: false, error: `Invalid plugin config: ${configError}` });
+    process.exitCode = 2;
+    return;
+  }
+
   const subcommand = parseSubcommand(process.argv[2]);
 
   if (!subcommand) {
@@ -139,6 +149,16 @@ export async function createPluginCli(pluginConfig: PluginConfig): Promise<void>
           });
         }
         const { success: healthOk } = aggregateChecks(checks);
+
+        // Validate declared outputs against actual outputs
+        const missingOutputs = pluginConfig.outputs.filter((key) => !(key in outputs));
+        if (missingOutputs.length > 0) {
+          emitter.emit({
+            type: "diagnostic",
+            severity: "warning",
+            message: `Missing declared outputs: ${missingOutputs.join(", ")}`,
+          });
+        }
 
         emitter.emit({
           type: "result",

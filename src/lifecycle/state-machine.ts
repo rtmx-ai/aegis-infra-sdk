@@ -9,6 +9,8 @@
  *
  * All CSP API calls go through the injectable CspClient port,
  * making every phase testable at Tier 1 with mocks.
+ *
+ * Implements: REQ-SDK-007 (error handling, backoff, partial failure)
  */
 
 import { InitState } from "./types.js";
@@ -80,18 +82,33 @@ export async function runPreflight(ctx: InitContext): Promise<boolean> {
   }
 }
 
-/** Poll a single API until it reports ENABLED or timeout. */
+/** Calculate backoff delay with jitter for polling. */
+export function backoffDelay(attempt: number, baseMs: number, maxMs: number): number {
+  const exponential = Math.min(baseMs * Math.pow(2, attempt), maxMs);
+  const jitter = exponential * (0.75 + Math.random() * 0.5); // +/- 25%
+  return Math.floor(jitter);
+}
+
+/** Poll a single API until it reports ENABLED or timeout. Uses exponential backoff. */
 export async function pollApiEnabled(ctx: InitContext, api: string): Promise<boolean> {
   const deadline = Date.now() + ctx.apiPollTimeoutMs;
+  let attempt = 0;
 
   while (Date.now() < deadline) {
-    const state = await ctx.cspClient.getApiState(ctx.config, api);
-    if (state === "ENABLED") {
-      return true;
+    try {
+      const state = await ctx.cspClient.getApiState(ctx.config, api);
+      if (state === "ENABLED") {
+        return true;
+      }
+    } catch {
+      // getApiState threw -- treat as "not yet enabled", continue polling
     }
+
     if (ctx.apiPollIntervalMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, ctx.apiPollIntervalMs));
+      const delay = backoffDelay(attempt, ctx.apiPollIntervalMs, 30000);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
+    attempt++;
   }
 
   return false;
@@ -100,19 +117,30 @@ export async function pollApiEnabled(ctx: InitContext, api: string): Promise<boo
 /** State 1: Enable required APIs and poll until active. */
 export async function enableApis(ctx: InitContext): Promise<boolean> {
   emitStateTransition(ctx, InitState.API_ENABLEMENT);
+  const failed: string[] = [];
 
   for (const api of ctx.requiredApis) {
-    const state = await ctx.cspClient.getApiState(ctx.config, api);
+    try {
+      const state = await ctx.cspClient.getApiState(ctx.config, api);
 
-    if (state === "ENABLED") {
+      if (state === "ENABLED") {
+        ctx.emitter.emit({
+          type: "progress",
+          resource: "csp:serviceusage:Api",
+          name: api,
+          operation: "create",
+          status: "complete",
+        });
+        continue;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       ctx.emitter.emit({
-        type: "progress",
-        resource: "csp:serviceusage:Api",
-        name: api,
-        operation: "create",
-        status: "complete",
+        type: "diagnostic",
+        severity: "warning",
+        message: `Failed to check API state for ${api}: ${msg}`,
       });
-      continue;
+      // Attempt to enable anyway
     }
 
     ctx.emitter.emit({
@@ -123,7 +151,25 @@ export async function enableApis(ctx: InitContext): Promise<boolean> {
       status: "in_progress",
     });
 
-    await ctx.cspClient.enableApi(ctx.config, api);
+    try {
+      await ctx.cspClient.enableApi(ctx.config, api);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      ctx.emitter.emit({
+        type: "progress",
+        resource: "csp:serviceusage:Api",
+        name: api,
+        operation: "create",
+        status: "failed",
+      });
+      ctx.emitter.emit({
+        type: "diagnostic",
+        severity: "error",
+        message: `Failed to enable API '${api}': ${msg}`,
+      });
+      failed.push(api);
+      continue; // Continue attempting remaining APIs
+    }
 
     const enabled = await pollApiEnabled(ctx, api);
     if (!enabled) {
@@ -134,12 +180,8 @@ export async function enableApis(ctx: InitContext): Promise<boolean> {
         operation: "create",
         status: "failed",
       });
-      ctx.emitter.emit({
-        type: "result",
-        success: false,
-        error: `API '${api}' failed to enable within timeout`,
-      });
-      return false;
+      failed.push(api);
+      continue; // Continue attempting remaining APIs
     }
 
     ctx.emitter.emit({
@@ -151,20 +193,39 @@ export async function enableApis(ctx: InitContext): Promise<boolean> {
     });
   }
 
+  if (failed.length > 0) {
+    ctx.emitter.emit({
+      type: "result",
+      success: false,
+      error: `Failed to enable APIs: ${failed.join(", ")}`,
+    });
+    return false;
+  }
+
   return true;
 }
 
 /**
  * Check API readiness without enabling. Used by preview, destroy, status.
- * Returns list of disabled API names (empty if all ready).
+ * Returns list of disabled or uncheckable API names (empty if all ready).
  */
 export async function checkApiReadiness(ctx: InitContext): Promise<string[]> {
   emitStateTransition(ctx, InitState.API_ENABLEMENT);
   const disabled: string[] = [];
 
   for (const api of ctx.requiredApis) {
-    const state = await ctx.cspClient.getApiState(ctx.config, api);
-    if (state !== "ENABLED") {
+    try {
+      const state = await ctx.cspClient.getApiState(ctx.config, api);
+      if (state !== "ENABLED") {
+        disabled.push(api);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      ctx.emitter.emit({
+        type: "diagnostic",
+        severity: "warning",
+        message: `Failed to check API state for ${api}: ${msg}`,
+      });
       disabled.push(api);
     }
   }
