@@ -3,3 +3,5 @@ REQ-SDK-001,SDK,Plugin Packaging Convention and Input Design,tests/integration/s
 REQ-SDK-002,SDK,Plugin Developer Best Practices,tests/integration/sdk-lifecycle.test.ts,protocol_compliance,Integration Test,NOT_STARTED,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-002.md
 REQ-SDK-003,DOCS,PLUGIN_GUIDE.md Developer Documentation,manual,manual_review,Manual,NOT_STARTED,HIGH,Phase 1,.rtmx/requirements/DOCS/REQ-SDK-003.md
 REQ-SDK-004,SDK,Plugin Release and Distribution,manual,manual_verification,Manual,NOT_STARTED,MEDIUM,Phase 2,.rtmx/requirements/SDK/REQ-SDK-004.md
+REQ-SDK-005,SDK,AWS GovCloud Plugin (Future),n/a,n/a,n/a,NOT_STARTED,LOW,Future,.rtmx/requirements/SDK/REQ-SDK-005.md
+REQ-SDK-006,SDK,Azure Government Plugin (Future),n/a,n/a,n/a,NOT_STARTED,LOW,Future,.rtmx/requirements/SDK/REQ-SDK-006.md
