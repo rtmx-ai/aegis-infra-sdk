@@ -5,3 +5,7 @@ REQ-SDK-003,DOCS,PLUGIN_GUIDE.md Developer Documentation,manual,manual_review,Ma
 REQ-SDK-004,SDK,Plugin Release and Distribution,manual,manual_verification,Manual,NOT_STARTED,MEDIUM,Phase 2,.rtmx/requirements/SDK/REQ-SDK-004.md
 REQ-SDK-005,SDK,AWS GovCloud Plugin (Future),n/a,n/a,n/a,NOT_STARTED,LOW,Future,.rtmx/requirements/SDK/REQ-SDK-005.md
 REQ-SDK-006,SDK,Azure Government Plugin (Future),n/a,n/a,n/a,NOT_STARTED,LOW,Future,.rtmx/requirements/SDK/REQ-SDK-006.md
+REQ-SDK-007,SDK,SDK Robustness and Validation,src/cli/__tests__/validation.test.ts,validatePluginConfig,Unit Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
+REQ-SDK-007,SDK,SDK Robustness and Validation,src/lifecycle/__tests__/partial-failure.test.ts,enableApis_partial,Unit Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
+REQ-SDK-007,SDK,SDK Robustness and Validation,tests/integration/failure-scenarios.test.ts,failure_scenarios,Integration Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
+REQ-SDK-008,SDK,SDK npm Release Workflow,.github/workflows/release.yml,release_workflow,Manual,NOT_STARTED,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-008.md
