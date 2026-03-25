@@ -1,5 +1,10 @@
 # @aegis/infra-sdk
 
+[![CI](https://github.com/rtmx-ai/aegis-infra-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/rtmx-ai/aegis-infra-sdk/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node: >=22](https://img.shields.io/badge/Node-%3E%3D22-green.svg)](.nvmrc)
+[![Protocol: aegis-infra/v1](https://img.shields.io/badge/Protocol-aegis--infra%2Fv1-purple.svg)](PLUGIN_GUIDE.md)
+
 Plugin SDK for aegis-cli infrastructure backends. This package extracts the generic plugin infrastructure (CLI argument parsing, lifecycle state machine, JSON-line protocol emission, health check aggregation, and local state management) from concrete IaC deployer plugins so that each new cloud-provider plugin implements only its domain-specific logic: resource definitions, health checks, and API client calls.
 
 ## Architecture
