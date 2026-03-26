@@ -56,14 +56,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run build
       - name: Verify package contents
         run: npm pack --dry-run
-      - name: Remove stale auth config from setup-node
-        run: npm config delete //registry.npmjs.org/:_authToken 2>/dev/null || true
       - name: Publish with Trusted Publishing (OIDC provenance)
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ""
 
   github-release:
     name: GitHub Release
