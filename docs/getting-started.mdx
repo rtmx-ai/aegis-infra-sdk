@@ -1,0 +1,115 @@
+---
+title: Getting Started
+description: Quick start guide for building an aegis-cli infrastructure backend plugin
+---
+
+# Getting Started
+
+This guide walks you through creating a new aegis-cli infrastructure backend plugin using `@aegis-cli/infra-sdk`.
+
+## Prerequisites
+
+- Node.js >= 22 (use [nvm](https://github.com/nvm-sh/nvm) to manage versions)
+- npm (included with Node.js)
+- A cloud provider account for testing (GCP, AWS, or Azure)
+
+## 1. Create a new plugin project
+
+```bash
+mkdir my-cloud-plugin && cd my-cloud-plugin
+npm init -y
+npm install @aegis-cli/infra-sdk
+npm install --save-dev typescript @types/node vitest
+```
+
+## 2. Create the entrypoint
+
+Create `src/index.ts` with a single `createPluginCli()` call:
+
+```typescript
+#!/usr/bin/env node
+import { createPluginCli } from "@aegis-cli/infra-sdk";
+import type { CspClient, IaCEngine, HealthChecker } from "@aegis-cli/infra-sdk";
+
+// Implement the three port interfaces for your cloud provider
+const myCspClient: CspClient = { /* ... */ };
+const myEngine: IaCEngine = { /* ... */ };
+const myHealthChecker: HealthChecker = { /* ... */ };
+
+createPluginCli({
+  name: "my-cloud-plugin",
+  version: "0.1.0",
+  description: "Provisions resources on MyCloud",
+  credentials: ["mycloud-token"],
+  inputs: [
+    { name: "project_id", type: "string", required: true },
+    { name: "region", type: "string", default: "us-east-1" },
+  ],
+  outputs: ["endpoint_url", "resource_id"],
+  cspClient: myCspClient,
+  engine: myEngine,
+  healthChecker: myHealthChecker,
+  requiredApis: ["compute.mycloud.com", "storage.mycloud.com"],
+});
+```
+
+That is the entire plugin entrypoint. The SDK handles:
+
+- Parsing `process.argv` for subcommand and `--input` JSON
+- Validating required inputs against the declared schema
+- Running preflight checks via your `CspClient`
+- Enabling required APIs and polling until active
+- Dispatching to your `IaCEngine` for preview/up/destroy
+- Running health checks and aggregating results
+- Emitting all protocol events as newline-delimited JSON on stdout
+- Catching errors and emitting structured error results
+
+## 3. Implement the three ports
+
+Create three implementation files:
+
+- `src/csp-client.ts` -- Implements `CspClient` (credential validation, API enablement)
+- `src/engine.ts` -- Implements `IaCEngine` (preview, up, destroy, getOutputs)
+- `src/health.ts` -- Implements `HealthChecker` (boundary health checks)
+
+For a complete working example, see the [gcp-assured-workloads](https://github.com/rtmx-ai/gcp-assured-workloads) reference plugin.
+
+See the [Plugin Authoring Guide](./plugin-guide.mdx) for detailed implementation guidance on each port.
+
+## 4. Build and test
+
+```bash
+# Build
+npx tsc
+
+# Test the manifest subcommand (no network required)
+node dist/index.js manifest
+
+# Run your tests
+npx vitest run
+```
+
+The `manifest` subcommand should output a JSON object describing your plugin's inputs, outputs, and required credentials. This is how aegis-cli discovers your plugin's capabilities.
+
+## 5. Package for distribution
+
+For development, run directly with Node.js:
+
+```bash
+npm run build
+node dist/index.js manifest
+```
+
+For production, bundle into a single binary:
+
+```bash
+bun build src/index.ts --compile --outfile my-cloud-plugin
+```
+
+See Section 11 of the [Plugin Authoring Guide](./plugin-guide.mdx) for full packaging and distribution details, including `plugin.json`, GitHub Releases asset naming, and cosign signing.
+
+## Next Steps
+
+- [API Reference](./api-reference.mdx) -- All public exports
+- [Plugin Authoring Guide](./plugin-guide.mdx) -- Complete authoring reference
+- [Security Model](./security.mdx) -- Threat model and security mitigations

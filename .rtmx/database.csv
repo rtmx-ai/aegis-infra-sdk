@@ -16,3 +16,8 @@ REQ-SDK-011,SDK,Runtime Security Boundaries,src/security/__tests__/output-valida
 REQ-SDK-011,SDK,Runtime Security Boundaries,src/security/__tests__/dependency-check.test.ts,validateSdkPinning,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
 REQ-SDK-011,SDK,Runtime Security Boundaries,tests/integration/failure-scenarios.test.ts,output_injection,Integration Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
 REQ-SDK-012,SDK,CI Compliance Enforcement,src/security/__tests__/ci-compliance.test.ts,checkCiCompliance,Unit Test,COMPLETE,HIGH,Phase 3,.rtmx/requirements/SDK/REQ-SDK-012.md
+REQ-SDK-013,DOCS,SDK Documentation Infrastructure,docs/index.mdx,frontmatter_validation,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
+REQ-SDK-013,DOCS,SDK Documentation Infrastructure,CHANGELOG.md,changelog_content,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
+REQ-SDK-013,DOCS,SDK Documentation Infrastructure,CONTRIBUTING.md,contributing_content,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
+REQ-SDK-013,DOCS,SDK Documentation Infrastructure,SECURITY.md,security_content,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
+REQ-SDK-014,DOCS,Documentation SDK and Multi-Version Strategy,n/a,n/a,n/a,NOT_STARTED,MEDIUM,Future,.rtmx/requirements/DOCS/REQ-SDK-014.md

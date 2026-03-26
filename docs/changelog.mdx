@@ -1,0 +1,40 @@
+---
+title: Changelog
+description: Release history for @aegis-cli/infra-sdk
+---
+
+# Changelog
+
+## 0.2.0 (2026-03-26)
+
+### Added
+- Output validation framework (outputValidation in PluginConfig)
+- Plugin manifest security schema (validatePluginManifest)
+- SDK version pinning enforcement (validateSdkPinning)
+- Binary integrity self-check (computeFileSha256)
+- CI compliance checker tool (aegis-ci-check CLI)
+- Exponential backoff with jitter in pollApiEnabled
+- Partial API failure handling (continue on individual API errors)
+- PluginConfig validation at registration time
+- Manifest-output mismatch detection
+- Failure scenario integration tests (9 scenarios)
+
+### Security
+- REQ-SDK-010: Plugin ecosystem security (attacks 1, 2, 7, 8)
+- REQ-SDK-011: Runtime security boundaries (attacks 3, 5, 6)
+- REQ-SDK-012: CI compliance enforcement
+
+## 0.1.0 (2026-03-25)
+
+### Added
+- Initial release
+- createPluginCli() entrypoint
+- aegis-infra/v1 protocol (progress, diagnostic, check, result events)
+- 4-phase lifecycle state machine (PREFLIGHT, API_ENABLEMENT, PROVISION, VERIFY)
+- CspClient, IaCEngine, HealthChecker port interfaces
+- StdoutEmitter for JSON-line protocol
+- Manifest builder from PluginConfig
+- Health check aggregation
+- Local state directory management
+- CLI argument parsing (subcommand, --input, --confirm-destroy)
+- Published to npm via Trusted Publishing (OIDC provenance)

@@ -187,3 +187,14 @@ src/
     local.ts          - resolveStateDir(), ensureStateDir(), buildStackName()
   index.ts            - re-export public API
 ```
+
+## Related Projects
+
+| Project | Description |
+|---------|-------------|
+| [aegis-cli](https://github.com/rtmx-ai/aegis-cli) | The Rust CLI that orchestrates infrastructure plugins |
+| [gcp-assured-workloads](https://github.com/rtmx-ai/gcp-assured-workloads) | Reference implementation: GCP IL4/IL5 Assured Workloads plugin |
+
+## License
+
+MIT

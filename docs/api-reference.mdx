@@ -1,0 +1,293 @@
+---
+title: API Reference
+description: Complete reference for all public exports of @aegis-cli/infra-sdk
+---
+
+# API Reference
+
+All public exports from `@aegis-cli/infra-sdk`. The SDK follows a hexagonal architecture with zero runtime dependencies.
+
+## Core Entrypoint
+
+### `createPluginCli(config: PluginConfig): Promise<void>`
+
+The single public API for plugin authors. Call this from your plugin's entrypoint. It reads `process.argv`, dispatches the subcommand, and handles all protocol emission.
+
+```typescript
+import { createPluginCli } from "@aegis-cli/infra-sdk";
+
+createPluginCli({
+  name: "my-plugin",
+  version: "0.1.0",
+  description: "My plugin description",
+  credentials: ["gcp-adc"],
+  inputs: [{ name: "project_id", type: "string", required: true }],
+  outputs: ["endpoint_url"],
+  cspClient: myCspClient,
+  engine: myEngine,
+  healthChecker: myHealthChecker,
+  requiredApis: ["compute.googleapis.com"],
+});
+```
+
+### `PluginConfig`
+
+Configuration object passed to `createPluginCli`.
+
+```typescript
+interface PluginConfig {
+  name: string;                          // Plugin name (used in manifest and state dir)
+  version: string;                       // Semver version string
+  description: string;                   // Human-readable description
+  credentials: string[];                 // Required credential types (e.g., ["gcp-adc"])
+  inputs: InputField[];                  // Declared input schema
+  outputs: string[];                     // Declared output field names
+  cspClient: CspClient;                  // Cloud provider API client implementation
+  engine: IaCEngine;                     // IaC engine implementation
+  healthChecker: HealthChecker;          // Health check implementation
+  requiredApis: string[];                // APIs to enable before provisioning
+  stateDir?: string;                     // Custom state directory (default: ~/.aegis/state/{name}/)
+  apiPollIntervalMs?: number;            // API poll interval (default: 5000)
+  apiPollTimeoutMs?: number;             // API poll timeout (default: 120000)
+  outputValidation?: Record<string, RegExp>;  // Regex patterns for output value validation
+  expectedSha256?: string;               // Expected SHA256 of the running binary
+}
+```
+
+## Port Interfaces
+
+These are the three interfaces that plugin authors implement.
+
+### `CspClient`
+
+Cloud service provider API client for preflight and API enablement.
+
+```typescript
+interface CspClient {
+  /** Validate credentials (e.g., ADC token fetch). Returns true if valid. */
+  validateCredentials(): Promise<boolean>;
+
+  /** Check if the caller can access the target resource/project. */
+  checkAccess(config: InfraConfig): Promise<boolean>;
+
+  /** Get the enablement state of a single API/service. */
+  getApiState(config: InfraConfig, api: string): Promise<"ENABLED" | "DISABLED">;
+
+  /** Enable a single API/service. Returns once the enable request is accepted. */
+  enableApi(config: InfraConfig, api: string): Promise<void>;
+}
+```
+
+### `IaCEngine`
+
+Provisions and manages cloud infrastructure.
+
+```typescript
+interface IaCEngine {
+  preview(config: InfraConfig): Promise<void>;
+  up(config: InfraConfig): Promise<BoundaryOutput>;
+  destroy(config: InfraConfig): Promise<void>;
+  getOutputs(config: InfraConfig): Promise<BoundaryOutput | undefined>;
+}
+```
+
+### `HealthChecker`
+
+Checks boundary health using actual provisioned resource state.
+
+```typescript
+interface HealthChecker {
+  checkAll(config: InfraConfig, outputs?: BoundaryOutput): Promise<HealthCheck[]>;
+}
+```
+
+## Domain Types
+
+### `InfraConfig`
+
+Validated input configuration for provisioning.
+
+```typescript
+interface InfraConfig {
+  readonly params: Record<string, string>;  // Parsed --input JSON
+}
+```
+
+### `BoundaryOutput`
+
+Outputs from a successfully provisioned boundary.
+
+```typescript
+type BoundaryOutput = Record<string, string>;
+```
+
+### `HealthCheck`
+
+Result of a single health check.
+
+```typescript
+interface HealthCheck {
+  readonly name: string;
+  readonly status: CheckStatus;
+  readonly detail: string;
+}
+
+type CheckStatus = "pass" | "fail" | "warn";
+```
+
+## Protocol
+
+### `StdoutEmitter`
+
+Emits protocol events as newline-delimited JSON to a writable stream.
+
+```typescript
+class StdoutEmitter implements EventEmitter {
+  constructor(stream?: NodeJS.WritableStream);  // Defaults to process.stdout
+  emit(event: ProtocolEvent): void;
+}
+```
+
+### Protocol Event Types
+
+The `aegis-infra/v1` protocol defines four event types:
+
+```typescript
+interface ProgressEvent {
+  readonly type: "progress";
+  readonly resource: string;
+  readonly name: string;
+  readonly operation: "create" | "update" | "delete";
+  readonly status: "in_progress" | "complete" | "failed";
+}
+
+interface DiagnosticEvent {
+  readonly type: "diagnostic";
+  readonly severity: "info" | "warning" | "error";
+  readonly message: string;
+}
+
+interface CheckEvent {
+  readonly type: "check";
+  readonly name: string;
+  readonly status: "pass" | "fail" | "warn";
+  readonly detail: string;
+}
+
+interface ResultEvent {
+  readonly type: "result";
+  readonly success: boolean;
+  readonly outputs?: Record<string, string>;
+  readonly error?: string;
+  readonly summary?: string;
+}
+
+type ProtocolEvent = ProgressEvent | DiagnosticEvent | CheckEvent | ResultEvent;
+```
+
+## Security Functions
+
+### `validatePluginManifest(json: unknown): PluginManifestValidation`
+
+Validates a `plugin.json` object against the extended security schema. Checks for required fields including `aegis-plugin`, `contract`, `name`, `binary-prefix`, `author` (with `org`, `repo`, `oidc-issuer`), and `security` (with `minimum-aegis-version`, `risk-classification`, `requires-network`).
+
+```typescript
+interface PluginManifestValidation {
+  valid: boolean;
+  errors: string[];
+}
+```
+
+### `validateOutputValues(outputs: BoundaryOutput, patterns: Record<string, RegExp>): string[]`
+
+Validates engine output values against regex patterns. Returns an array of violation descriptions (empty array means all values are valid). Used to block output injection attacks.
+
+```typescript
+const violations = validateOutputValues(
+  { endpoint_url: "https://example.com", resource_id: "abc-123" },
+  { endpoint_url: /^https:\/\/[a-z0-9.-]+\.googleapis\.com/ },
+);
+```
+
+### `validateSdkPinning(packageJson: Record<string, unknown>): PinningResult`
+
+Verifies that a plugin's `package.json` pins `@aegis-cli/infra-sdk` to an exact version (no `^`, `~`, or range operators). Prevents supply chain attacks via semver range auto-update.
+
+```typescript
+interface PinningResult {
+  valid: boolean;
+  reason: string;
+}
+```
+
+### `computeFileSha256(filePath: string): Promise<string>`
+
+Computes the SHA256 hash of a file using `node:crypto`. Returns the hex-encoded hash string. Used for binary integrity self-checks.
+
+### `checkCiCompliance(workflowDir: string): ComplianceResult`
+
+Checks GitHub Actions workflow files in a directory for release security compliance. Verifies the presence of cosign signing, checksum generation, version verification, binary verification, bundle upload, and `id-token: write` permission.
+
+```typescript
+interface ComplianceCheck {
+  name: string;
+  passed: boolean;
+  message: string;
+}
+
+interface ComplianceResult {
+  overall: boolean;
+  checks: ComplianceCheck[];
+}
+```
+
+This function also powers the `aegis-ci-check` CLI tool (exposed via the `bin` field in package.json).
+
+## Utility Exports
+
+### CLI Argument Parsing
+
+```typescript
+function parseSubcommand(arg: string | undefined): Subcommand | null;
+function parseInput(json: string, inputs: readonly InputField[]): InfraConfig;
+function extractInput(argv: string[], inputs: readonly InputField[]): InfraConfig;
+function requireConfirmDestroy(argv: string[]): boolean;
+```
+
+### Lifecycle State Machine
+
+```typescript
+function runPreflight(ctx: InitContext): Promise<boolean>;
+function enableApis(ctx: InitContext): Promise<boolean>;
+function checkApiReadiness(ctx: InitContext): Promise<string[]>;
+function pollApiEnabled(ctx: InitContext, api: string): Promise<boolean>;
+function isRetryableError(err: unknown): boolean;
+function backoffDelay(attempt: number, baseMs: number, maxMs: number): number;
+```
+
+### Health Check Aggregation
+
+```typescript
+function aggregateChecks(checks: HealthCheck[]): { success: boolean; summary: string };
+```
+
+### Local State Management
+
+```typescript
+function resolveStateDir(pluginName: string, stateDir?: string): string;
+function ensureStateDir(pluginName: string, stateDir?: string): string;
+function buildStackName(config: InfraConfig): string;
+```
+
+### Plugin Config Validation
+
+```typescript
+function validatePluginConfig(config: PluginConfig): string | null;
+```
+
+### Manifest Builder
+
+```typescript
+const CONTRACT_VERSION = "aegis-infra/v1";
+function buildManifest(config: PluginConfig): Manifest;
+```

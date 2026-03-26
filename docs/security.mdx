@@ -1,0 +1,126 @@
+---
+title: Security Model
+description: Threat model, attack vectors, and mitigations for the aegis plugin ecosystem
+---
+
+# Security Model
+
+The aegis plugin ecosystem executes third-party code (plugins) with access to cloud provider credentials and infrastructure. This document describes the threat model, the 8 identified attack vectors, and the mitigations implemented across the SDK and aegis-cli.
+
+## Threat Model Overview
+
+aegis-cli downloads and executes plugin binaries that provision cloud infrastructure in compliance-sensitive environments (IL4/IL5, CUI). The trust boundary sits between aegis-cli and the plugin binary. A compromised or malicious plugin could:
+
+- Exfiltrate credentials or CUI data
+- Provision resources outside the compliance boundary
+- Report false health status to mask a broken boundary
+- Inject malicious values into outputs consumed by downstream systems
+
+## The 8 Attack Vectors
+
+| # | Attack | Description | Owner |
+|---|--------|-------------|-------|
+| 1 | Malicious plugin publication | Attacker publishes a plugin that appears legitimate but contains malicious code | SDK + aegis-cli |
+| 2 | Plugin manifest spoofing | Attacker modifies plugin.json to misrepresent capabilities or identity | SDK |
+| 3 | Output injection | Compromised engine returns crafted output values that exploit downstream consumers | SDK |
+| 4 | Trusted publisher impersonation | Attacker creates a repo that mimics a trusted publisher's plugin | aegis-cli |
+| 5 | Supply chain (dependency) attack | Attacker compromises an SDK dependency or exploits semver range auto-update | SDK |
+| 6 | State file tampering | Attacker modifies local Pulumi/Terraform state to alter infrastructure | SDK + aegis-cli |
+| 7 | Binary tampering (post-download) | Attacker modifies the plugin binary after download but before execution | SDK + aegis-cli |
+| 8 | CI pipeline compromise | Attacker compromises the release workflow to inject malicious code into signed binaries | SDK |
+
+## SDK Mitigations (implemented in @aegis-cli/infra-sdk)
+
+### Output Validation (Attack 3) -- REQ-SDK-011
+
+The `validateOutputValues()` function validates engine output values against regex patterns before they are emitted in the result event. Plugin authors declare validation patterns in `PluginConfig.outputValidation`:
+
+```typescript
+createPluginCli({
+  // ...
+  outputValidation: {
+    endpoint_url: /^https:\/\/[a-z0-9.-]+\.googleapis\.com/,
+    kms_key_resource_name: /^projects\/[a-z0-9-]+\/locations\/[a-z0-9-]+\/keyRings\//,
+  },
+});
+```
+
+If any output value fails validation, the SDK emits a failure result and exits with code 2. The malicious value never reaches aegis-cli.
+
+### Manifest Schema Validation (Attacks 1, 2) -- REQ-SDK-010
+
+The `validatePluginManifest()` function enforces a strict schema for `plugin.json` files:
+
+- Required core fields: `aegis-plugin`, `contract`, `name`, `binary-prefix`
+- Required `author` block with `org`, `repo`, and `oidc-issuer` (must be `https://token.actions.githubusercontent.com`)
+- Required `security` block with:
+  - `minimum-aegis-version` (valid semver)
+  - `risk-classification` (one of: CUI, PUBLIC, INTERNAL)
+  - `requires-network` (array of domain glob patterns matching `/^(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)*$/`)
+
+The domain allowlist in `requires-network` declares which external domains the plugin needs. aegis-cli can use this to enforce network restrictions.
+
+### SDK Version Pinning (Attack 5) -- REQ-SDK-011
+
+The `validateSdkPinning()` function verifies that a plugin's `package.json` pins `@aegis-cli/infra-sdk` to an exact version -- no `^`, `~`, `>`, `<`, `*`, or range operators. This prevents a compromised npm package from being silently pulled in via semver range resolution.
+
+```json
+{
+  "dependencies": {
+    "@aegis-cli/infra-sdk": "0.2.0"
+  }
+}
+```
+
+### Binary Integrity Self-Check (Attack 7) -- REQ-SDK-010
+
+The `computeFileSha256()` function computes the SHA256 hash of any file using `node:crypto`. Plugin authors can set `PluginConfig.expectedSha256` to enable a self-check before subcommand dispatch. If the running binary's hash does not match, the plugin refuses to execute.
+
+### CI Compliance Enforcement (Attack 8) -- REQ-SDK-012
+
+The `checkCiCompliance()` function (and the `aegis-ci-check` CLI tool) audits GitHub Actions workflow files for release security compliance. It checks for:
+
+| Check | What it verifies |
+|-------|-----------------|
+| `cosign-signing` | `cosign sign-blob` step present for keyless binary signing |
+| `checksum-generation` | `sha256sum` or `shasum` step for checksum generation |
+| `version-verification` | Step comparing git tag version to package.json version |
+| `binary-verification` | Step testing that the binary responds to `manifest` |
+| `bundle-upload` | `.bundle` files included in release uploads (cosign bundles) |
+| `id-token-permission` | `id-token: write` permission set (required for OIDC keyless signing) |
+
+All six checks must pass for a release workflow to be considered compliant.
+
+### PluginConfig Validation at Registration Time
+
+The SDK validates `PluginConfig` when `createPluginCli()` is called, before any subcommand dispatch. Invalid configurations (missing name, empty inputs array, etc.) produce a structured error result immediately.
+
+### Manifest-Output Mismatch Detection
+
+During the `up` subcommand, the SDK compares declared output keys (`PluginConfig.outputs`) against actual output keys returned by `IaCEngine.up()`. Missing outputs are reported as diagnostic warnings.
+
+## aegis-cli Responsibilities (not implemented in the SDK)
+
+The following mitigations are the responsibility of aegis-cli, not the SDK:
+
+### Trusted Publisher Allowlist (Attack 4)
+
+aegis-cli maintains a list of trusted GitHub organizations/repos. Plugins from untrusted publishers require explicit user confirmation. The `author.oidc-issuer` and `author.org`/`author.repo` fields in `plugin.json` are verified against the OIDC identity in the cosign signature.
+
+### Binary Tamper Check (Attack 7)
+
+aegis-cli verifies the SHA256 checksum from `SHA256SUMS.txt` and the cosign signature bundle before executing any plugin binary. This is a pre-execution check that complements the SDK's self-check.
+
+### TOCTOU Protection (Attack 7)
+
+aegis-cli should verify binary integrity immediately before execution, not just at download time. Time-of-check-to-time-of-use gaps allow an attacker to replace the binary between download and execution.
+
+### Network Restriction Enforcement
+
+aegis-cli can use the `security.requires-network` field from `plugin.json` to restrict plugin network access (e.g., via seccomp/sandbox on Linux, or network policy on macOS).
+
+## Responsible Disclosure
+
+If you discover a security vulnerability in `@aegis-cli/infra-sdk` or any aegis plugin, please report it via email to **security@rtmx.ai**. Do not open a public GitHub issue for security vulnerabilities.
+
+We aim to acknowledge reports within 48 hours and provide a fix or mitigation within 7 days for critical issues.

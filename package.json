@@ -7,6 +7,19 @@
     "type": "git",
     "url": "https://github.com/rtmx-ai/aegis-infra-sdk"
   },
+  "homepage": "https://github.com/rtmx-ai/aegis-infra-sdk",
+  "bugs": {
+    "url": "https://github.com/rtmx-ai/aegis-infra-sdk/issues"
+  },
+  "keywords": [
+    "aegis",
+    "aegis-cli",
+    "plugin-sdk",
+    "infrastructure",
+    "compliance",
+    "pulumi",
+    "cloud-provider"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
