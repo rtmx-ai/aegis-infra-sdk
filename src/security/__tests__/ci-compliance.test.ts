@@ -117,10 +117,7 @@ describe("checkCiCompliance", () => {
   });
 
   it("fails when version verification step is missing", () => {
-    const content = removePattern(
-      COMPLIANT_WORKFLOW,
-      /package\.json.*version/g,
-    );
+    const content = removePattern(COMPLIANT_WORKFLOW, /package\.json.*version/g);
     writeWorkflow(tmpDir, "release.yml", content);
     const result = checkCiCompliance(tmpDir);
     expect(result.overall).toBe(false);

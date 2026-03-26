@@ -36,29 +36,25 @@ const CHECK_DEFINITIONS: CheckDefinition[] = [
     name: "version-verification",
     pattern: /package\.json.*version|version.*package\.json/,
     passMessage: "Version verification step found",
-    failMessage:
-      "Missing step comparing tag version to package.json version",
+    failMessage: "Missing step comparing tag version to package.json version",
   },
   {
     name: "binary-verification",
     pattern: /manifest/,
     passMessage: "Binary verification (manifest test) step found",
-    failMessage:
-      "Missing binary verification step (binary should respond to manifest)",
+    failMessage: "Missing binary verification step (binary should respond to manifest)",
   },
   {
     name: "bundle-upload",
     pattern: /\.bundle/,
     passMessage: "Cosign bundle upload step found",
-    failMessage:
-      "Missing .bundle in upload step (cosign bundles must be uploaded)",
+    failMessage: "Missing .bundle in upload step (cosign bundles must be uploaded)",
   },
   {
     name: "id-token-permission",
     pattern: /id-token:\s*write/,
     passMessage: "id-token: write permission found",
-    failMessage:
-      "Missing id-token: write permission (required for keyless signing)",
+    failMessage: "Missing id-token: write permission (required for keyless signing)",
   },
 ];
 
@@ -83,9 +79,7 @@ export function checkCiCompliance(workflowDir: string): ComplianceResult {
     };
   }
 
-  const ymlFiles = files.filter(
-    (f) => f.endsWith(".yml") || f.endsWith(".yaml"),
-  );
+  const ymlFiles = files.filter((f) => f.endsWith(".yml") || f.endsWith(".yaml"));
 
   if (ymlFiles.length === 0) {
     return {

@@ -10,9 +10,7 @@ if (!dir) {
 
 const result = checkCiCompliance(dir);
 for (const check of result.checks) {
-  console.log(
-    `${check.passed ? "PASS" : "FAIL"} ${check.name}: ${check.message}`,
-  );
+  console.log(`${check.passed ? "PASS" : "FAIL"} ${check.name}: ${check.message}`);
 }
 
 if (!result.overall) {

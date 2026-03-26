@@ -43,7 +43,11 @@ describe("validateSdkPinning", () => {
   });
 
   it("rejects git: reference", () => {
-    const pkg = { dependencies: { "@aegis-cli/infra-sdk": "git+https://github.com/rtmx-ai/aegis-infra-sdk.git" } };
+    const pkg = {
+      dependencies: {
+        "@aegis-cli/infra-sdk": "git+https://github.com/rtmx-ai/aegis-infra-sdk.git",
+      },
+    };
     expect(validateSdkPinning(pkg).valid).toBe(false);
   });
 

@@ -30,7 +30,10 @@ export function validateSdkPinning(packageJson: Record<string, unknown>): Pinnin
   }
 
   if (version.startsWith("file:") || version.startsWith("git")) {
-    return { valid: false, reason: `${SDK_PACKAGE_NAME} must use an exact npm version, not a file: or git: reference` };
+    return {
+      valid: false,
+      reason: `${SDK_PACKAGE_NAME} must use an exact npm version, not a file: or git: reference`,
+    };
   }
 
   for (const prefix of RANGE_PREFIXES) {
@@ -43,7 +46,10 @@ export function validateSdkPinning(packageJson: Record<string, unknown>): Pinnin
   }
 
   if (version.includes(" ")) {
-    return { valid: false, reason: `${SDK_PACKAGE_NAME} must use exact version pinning (no range operators). Got "${version}"` };
+    return {
+      valid: false,
+      reason: `${SDK_PACKAGE_NAME} must use exact version pinning (no range operators). Got "${version}"`,
+    };
   }
 
   return { valid: true, reason: `${SDK_PACKAGE_NAME} pinned to exact version ${version}` };

@@ -101,7 +101,10 @@ describe("validatePluginManifest", () => {
 
   it("rejects invalid domain glob patterns", () => {
     const m = validManifest();
-    (m.security as Record<string, unknown>)["requires-network"] = ["*.googleapis.com", "http://bad"];
+    (m.security as Record<string, unknown>)["requires-network"] = [
+      "*.googleapis.com",
+      "http://bad",
+    ];
     const result = validatePluginManifest(m);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes("invalid domain pattern"))).toBe(true);
