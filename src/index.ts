@@ -60,3 +60,11 @@ export { parseSubcommand, parseInput, extractInput, requireConfirmDestroy } from
 
 // Plugin config validation
 export { validatePluginConfig } from "./cli/validation.js";
+
+// Security
+export { validateOutputValues } from "./security/output-validation.js";
+export { validatePluginManifest } from "./security/manifest-schema.js";
+export type { PluginManifestValidation } from "./security/manifest-schema.js";
+export { validateSdkPinning } from "./security/dependency-check.js";
+export type { PinningResult } from "./security/dependency-check.js";
+export { computeFileSha256 } from "./security/integrity.js";

@@ -187,3 +187,29 @@ describe("manifest-output mismatch", () => {
     expect(warnings.some((w) => String(w.message).includes("key_id"))).toBe(true);
   });
 });
+
+// --- Output injection attack ---
+
+describe("output injection (Attack 3)", () => {
+  it("blocks malicious output values when outputValidation is set", async () => {
+    const { stdout, exitCode } = await runPlugin(
+      ["up", "--input", '{"target_id":"test"}'],
+      "output_injection",
+    );
+    expect(exitCode).toBe(2);
+    const events = parseEvents(stdout);
+    const result = findResult(events);
+    expect(result?.success).toBe(false);
+    expect(String(result?.error)).toContain("Output validation failed");
+    expect(String(result?.error)).toContain("endpoint");
+    // The malicious value should NOT appear in any result outputs
+    const resultWithOutputs = events.find(
+      (e) => e.type === "result" && e.outputs,
+    );
+    if (resultWithOutputs) {
+      expect((resultWithOutputs.outputs as Record<string, string>)?.endpoint).not.toBe(
+        "attacker-proxy.evil.com",
+      );
+    }
+  });
+});

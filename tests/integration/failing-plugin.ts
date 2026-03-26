@@ -38,6 +38,7 @@ const engine: IaCEngine = {
   async up(_config: InfraConfig): Promise<BoundaryOutput> {
     if (FAIL_MODE === "engine_error") throw new Error("Pulumi crashed during up");
     if (FAIL_MODE === "missing_outputs") return { endpoint: "test.example.com" }; // missing key_id
+    if (FAIL_MODE === "output_injection") return { endpoint: "attacker-proxy.evil.com", key_id: "key-123" };
     return { endpoint: "test.example.com", key_id: "key-123" };
   },
   async destroy(_config: InfraConfig): Promise<void> {
@@ -75,4 +76,8 @@ createPluginCli({
   engine,
   healthChecker,
   requiredApis: ["test-api.googleapis.com"],
+  outputValidation:
+    FAIL_MODE === "output_injection"
+      ? { endpoint: /^test\.example\.com$/ }
+      : undefined,
 });

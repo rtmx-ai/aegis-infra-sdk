@@ -16,6 +16,7 @@ import { InitState } from "../lifecycle/types.js";
 import type { InitContext } from "../lifecycle/types.js";
 import { aggregateChecks } from "../health/aggregator.js";
 import { validatePluginConfig } from "./validation.js";
+import { validateOutputValues } from "../security/output-validation.js";
 
 /** Configuration passed to createPluginCli by the plugin author. */
 export interface PluginConfig {
@@ -32,6 +33,10 @@ export interface PluginConfig {
   stateDir?: string;
   apiPollIntervalMs?: number;
   apiPollTimeoutMs?: number;
+  /** Regex patterns for output value validation. Blocks output injection (Attack 3). */
+  outputValidation?: Record<string, RegExp>;
+  /** Expected SHA256 of the running binary. If set, verified before subcommand dispatch (Attack 7). */
+  expectedSha256?: string;
 }
 
 function buildContext(
@@ -137,6 +142,20 @@ export async function createPluginCli(pluginConfig: PluginConfig): Promise<void>
           message: `Entering state: ${InitState.PROVISION}`,
         });
         const outputs = await pluginConfig.engine.up(infraConfig);
+
+        // Validate outputs against patterns before emission (Attack 3: output injection)
+        if (pluginConfig.outputValidation) {
+          const violations = validateOutputValues(outputs, pluginConfig.outputValidation);
+          if (violations.length > 0) {
+            emitter.emit({
+              type: "result",
+              success: false,
+              error: `Output validation failed: ${violations.join("; ")}`,
+            });
+            process.exitCode = 2;
+            return;
+          }
+        }
 
         emitter.emit({
           type: "diagnostic",
