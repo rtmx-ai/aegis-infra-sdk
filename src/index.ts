@@ -68,3 +68,5 @@ export type { PluginManifestValidation } from "./security/manifest-schema.js";
 export { validateSdkPinning } from "./security/dependency-check.js";
 export type { PinningResult } from "./security/dependency-check.js";
 export { computeFileSha256 } from "./security/integrity.js";
+export { checkCiCompliance } from "./security/ci-compliance.js";
+export type { ComplianceCheck, ComplianceResult } from "./security/ci-compliance.js";
