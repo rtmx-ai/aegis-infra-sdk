@@ -8,4 +8,11 @@ REQ-SDK-006,SDK,Azure Government Plugin (Future),n/a,n/a,n/a,NOT_STARTED,LOW,Fut
 REQ-SDK-007,SDK,SDK Robustness and Validation,src/cli/__tests__/validation.test.ts,validatePluginConfig,Unit Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
 REQ-SDK-007,SDK,SDK Robustness and Validation,src/lifecycle/__tests__/partial-failure.test.ts,enableApis_partial,Unit Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
 REQ-SDK-007,SDK,SDK Robustness and Validation,tests/integration/failure-scenarios.test.ts,failure_scenarios,Integration Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
-REQ-SDK-008,SDK,SDK npm Release Workflow,.github/workflows/release.yml,release_workflow,Manual,NOT_STARTED,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-008.md
+REQ-SDK-008,SDK,SDK npm Release Workflow,.github/workflows/release.yml,release_workflow,Manual,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-008.md
+REQ-SDK-009,SDK,Plugin Distribution and Verification,manual,three_layer_verification,Manual,PARTIAL,HIGH,Phase 2,.rtmx/requirements/SDK/REQ-SDK-009.md
+REQ-SDK-010,SDK,Plugin Ecosystem Security,src/security/__tests__/manifest-schema.test.ts,validatePluginManifest,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-010.md
+REQ-SDK-010,SDK,Plugin Ecosystem Security,src/security/__tests__/integrity.test.ts,computeFileSha256,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-010.md
+REQ-SDK-011,SDK,Runtime Security Boundaries,src/security/__tests__/output-validation.test.ts,validateOutputValues,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
+REQ-SDK-011,SDK,Runtime Security Boundaries,src/security/__tests__/dependency-check.test.ts,validateSdkPinning,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
+REQ-SDK-011,SDK,Runtime Security Boundaries,tests/integration/failure-scenarios.test.ts,output_injection,Integration Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
+REQ-SDK-012,SDK,CI Compliance Enforcement,src/security/__tests__/ci-compliance.test.ts,checkCiCompliance,Unit Test,COMPLETE,HIGH,Phase 3,.rtmx/requirements/SDK/REQ-SDK-012.md
