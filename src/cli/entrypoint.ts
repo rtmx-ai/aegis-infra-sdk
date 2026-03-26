@@ -59,7 +59,11 @@ export async function createPluginCli(pluginConfig: PluginConfig): Promise<void>
   // Validate config at registration time
   const configError = validatePluginConfig(pluginConfig);
   if (configError) {
-    emitter.emit({ type: "result", success: false, error: `Invalid plugin config: ${configError}` });
+    emitter.emit({
+      type: "result",
+      success: false,
+      error: `Invalid plugin config: ${configError}`,
+    });
     process.exitCode = 2;
     return;
   }

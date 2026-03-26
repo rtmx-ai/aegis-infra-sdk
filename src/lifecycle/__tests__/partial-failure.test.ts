@@ -46,7 +46,9 @@ describe("backoffDelay", () => {
   it("increases with attempt number", () => {
     // With jitter, we can't check exact values, but trend should increase
     // Run multiple times to average out jitter
-    let sum0 = 0, sum1 = 0, sum2 = 0;
+    let sum0 = 0,
+      sum1 = 0,
+      sum2 = 0;
     for (let i = 0; i < 100; i++) {
       sum0 += backoffDelay(0, 1000, 30000);
       sum1 += backoffDelay(1, 1000, 30000);
