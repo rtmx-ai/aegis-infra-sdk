@@ -51,7 +51,7 @@ function buildContext(
 
 /**
  * Create and run a plugin CLI from a PluginConfig.
- * This is the single public API of @aegis/infra-sdk.
+ * This is the single public API of @aegis-cli/infra-sdk.
  */
 export async function createPluginCli(pluginConfig: PluginConfig): Promise<void> {
   const emitter = new StdoutEmitter();

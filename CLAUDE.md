@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-@aegis/infra-sdk is the plugin SDK for [aegis-cli](https://github.com/rtmx-ai/aegis-cli) infrastructure backends. It extracts generic plugin infrastructure (CLI argument parsing, lifecycle state machine, JSON-line protocol emission, health check aggregation, local state management) so that each cloud-provider plugin (e.g., gcp-cui-gemini) implements only its domain-specific logic.
+@aegis-cli/infra-sdk is the plugin SDK for [aegis-cli](https://github.com/rtmx-ai/aegis-cli) infrastructure backends. It extracts generic plugin infrastructure (CLI argument parsing, lifecycle state machine, JSON-line protocol emission, health check aggregation, local state management) so that each cloud-provider plugin (e.g., gcp-cui-gemini) implements only its domain-specific logic.
 
 The SDK has zero runtime dependencies -- it uses only Node.js built-ins. Plugin authors call `createPluginCli(config)` with their implementations of `CspClient`, `IaCEngine`, and `HealthChecker`, and the SDK handles everything else.
 

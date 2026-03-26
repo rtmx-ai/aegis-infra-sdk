@@ -8,7 +8,7 @@ The SDK must ship with a comprehensive plugin authoring guide that serves as the
 
 ### Location
 
-`PLUGIN_GUIDE.md` in the root of the `@aegis/infra-sdk` repo.
+`PLUGIN_GUIDE.md` in the root of the `@aegis-cli/infra-sdk` repo.
 
 ### Required Sections
 

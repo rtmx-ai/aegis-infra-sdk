@@ -1,5 +1,5 @@
 /**
- * @aegis/infra-sdk -- Plugin SDK for aegis-cli infrastructure backends.
+ * @aegis-cli/infra-sdk -- Plugin SDK for aegis-cli infrastructure backends.
  *
  * Public API re-exports.
  */

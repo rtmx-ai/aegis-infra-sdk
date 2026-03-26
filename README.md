@@ -1,4 +1,4 @@
-# @aegis/infra-sdk
+# @aegis-cli/infra-sdk
 
 [![CI](https://github.com/rtmx-ai/aegis-infra-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/rtmx-ai/aegis-infra-sdk/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -12,7 +12,7 @@ Plugin SDK for aegis-cli infrastructure backends. This package extracts the gene
 ```mermaid
 graph TD
     A[aegis-cli] -->|spawns subprocess| B["Plugin Binary<br/>(e.g., gcp-cui-gemini)"]
-    B -->|uses| C["@aegis/infra-sdk"]
+    B -->|uses| C["@aegis-cli/infra-sdk"]
     C -->|provides| D[CLI Entrypoint]
     C -->|provides| E[Lifecycle State Machine]
     C -->|provides| F[Protocol Emitter]
@@ -33,8 +33,8 @@ The SDK sits between aegis-cli and the plugin implementation. aegis-cli spawns t
 
 ```typescript
 #!/usr/bin/env node
-import { createPluginCli } from "@aegis/infra-sdk";
-import type { CspClient, IaCEngine, HealthChecker } from "@aegis/infra-sdk";
+import { createPluginCli } from "@aegis-cli/infra-sdk";
+import type { CspClient, IaCEngine, HealthChecker } from "@aegis-cli/infra-sdk";
 
 // Implement the three port interfaces for your cloud provider
 const myCspClient: CspClient = { /* ... */ };

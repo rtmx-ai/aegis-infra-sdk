@@ -8,7 +8,7 @@ A naming convention and input schema pattern ensures consistency across the plug
 
 ## Upstream Cross-References
 
-- REQ-GCG-009 (gcp-cui-gemini): Extract @aegis/infra-sdk for Plugin Ecosystem
+- REQ-GCG-009 (gcp-cui-gemini): Extract @aegis-cli/infra-sdk for Plugin Ecosystem
 - REQ-AEG-008 (aegis-cli): Secure Onboarding State Machine -- mode selection determines which plugin to invoke
 
 ## Specification

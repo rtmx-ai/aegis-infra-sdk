@@ -1,5 +1,5 @@
 {
-  "name": "@aegis/infra-sdk",
+  "name": "@aegis-cli/infra-sdk",
   "version": "0.1.0",
   "description": "Plugin SDK for aegis-cli infrastructure backends",
   "license": "MIT",

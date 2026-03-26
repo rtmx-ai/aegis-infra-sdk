@@ -1,6 +1,6 @@
 # Plugin Authoring Guide
 
-This guide is the authoritative reference for building an aegis-cli infrastructure backend plugin using `@aegis/infra-sdk`.
+This guide is the authoritative reference for building an aegis-cli infrastructure backend plugin using `@aegis-cli/infra-sdk`.
 
 ## 1. Overview
 
@@ -51,14 +51,14 @@ Anti-patterns:
 ```bash
 mkdir gcp-assured-workloads && cd gcp-assured-workloads
 npm init -y
-npm install @aegis/infra-sdk
+npm install @aegis-cli/infra-sdk
 npm install --save-dev typescript @types/node vitest
 ```
 
 Create `src/index.ts`:
 
 ```typescript
-import { createPluginCli } from "@aegis/infra-sdk";
+import { createPluginCli } from "@aegis-cli/infra-sdk";
 import { GcpClient } from "./csp-client.js";
 import { PulumiEngine } from "./engine.js";
 import { GcpHealthChecker } from "./health.js";
@@ -109,7 +109,7 @@ flowchart TB
         Stack["stack.ts\nIaC resource definitions"]
     end
 
-    subgraph SDK ["@aegis/infra-sdk (you do NOT write this)"]
+    subgraph SDK ["@aegis-cli/infra-sdk (you do NOT write this)"]
         CLI["CLI dispatch"]
         SM["State machine"]
         Proto["Protocol emitter"]
@@ -170,7 +170,7 @@ The model input is validated during VERIFY, not PROVISION. This means:
 `CspClient` has four methods. Each should make exactly one API call.
 
 ```typescript
-import type { CspClient, InfraConfig } from "@aegis/infra-sdk";
+import type { CspClient, InfraConfig } from "@aegis-cli/infra-sdk";
 
 export class GcpClient implements CspClient {
   async validateCredentials(): Promise<boolean> {
@@ -239,8 +239,8 @@ For **AWS GovCloud**, the same pattern uses STS for credential validation, Organ
 The recommended approach is Pulumi Automation API with a local file backend:
 
 ```typescript
-import type { IaCEngine, InfraConfig, BoundaryOutput } from "@aegis/infra-sdk";
-import { resolveStateDir, ensureStateDir, buildStackName } from "@aegis/infra-sdk";
+import type { IaCEngine, InfraConfig, BoundaryOutput } from "@aegis-cli/infra-sdk";
+import { resolveStateDir, ensureStateDir, buildStackName } from "@aegis-cli/infra-sdk";
 import * as automation from "@pulumi/pulumi/automation/index.js";
 import { defineResources, extractOutputs } from "./stack.js";
 
@@ -311,7 +311,7 @@ Every check must return one of three statuses:
 | `warn` | Cannot determine | Insufficient permissions or network error. Never mask a real failure as warn. |
 
 ```typescript
-import type { HealthChecker, InfraConfig, BoundaryOutput, HealthCheck } from "@aegis/infra-sdk";
+import type { HealthChecker, InfraConfig, BoundaryOutput, HealthCheck } from "@aegis-cli/infra-sdk";
 
 export class GcpHealthChecker implements HealthChecker {
   async checkAll(config: InfraConfig, outputs?: BoundaryOutput): Promise<HealthCheck[]> {

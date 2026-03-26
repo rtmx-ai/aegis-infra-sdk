@@ -2,14 +2,14 @@
 
 ## Overview
 
-The SDK must be published to npm as `@aegis/infra-sdk` via an automated CI workflow triggered by git tags. Plugin authors install the SDK as a standard npm dependency. The release process must be reproducible, auditable, and require no manual npm CLI steps.
+The SDK must be published to npm as `@aegis-cli/infra-sdk` via an automated CI workflow triggered by git tags. Plugin authors install the SDK as a standard npm dependency. The release process must be reproducible, auditable, and require no manual npm CLI steps.
 
 ## Specification
 
 ### npm Package
 
 - Scope: `@aegis`
-- Package name: `@aegis/infra-sdk`
+- Package name: `@aegis-cli/infra-sdk`
 - Registry: npmjs.com (public)
 - Access: public (no paid scope required for public packages)
 
@@ -42,7 +42,7 @@ The SDK must be published to npm as `@aegis/infra-sdk` via an automated CI workf
 - Minor: new exports, backward-compatible additions
 - Major: breaking changes to PluginConfig, port interfaces, or protocol contract version
 - The protocol contract version (`aegis-infra/v1`) changes only on major SDK releases
-- Plugin authors pin `"@aegis/infra-sdk": "^0.x.0"` for compatible updates
+- Plugin authors pin `"@aegis-cli/infra-sdk": "^0.x.0"` for compatible updates
 
 ### Pre-publish Checklist (automated)
 
@@ -76,7 +76,7 @@ The SDK must be published to npm as `@aegis/infra-sdk` via an automated CI workf
 
 ## Acceptance Criteria
 
-- [AC1] `npm install @aegis/infra-sdk` works after a release
+- [AC1] `npm install @aegis-cli/infra-sdk` works after a release
 - [AC2] Release is triggered only by version tags, not by branch pushes
 - [AC3] Full CI runs before publish
 - [AC4] Tag-version mismatch is detected and blocks publish

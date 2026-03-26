@@ -1,5 +1,5 @@
 /**
- * Domain value objects for @aegis/infra-sdk.
+ * Domain value objects for @aegis-cli/infra-sdk.
  * Zero I/O dependencies -- pure data types and validation.
  */
 

@@ -45,7 +45,7 @@ Each plugin release produces:
 ### SDK Versioning
 
 - The SDK follows semver
-- Plugins declare the SDK as a dependency: `"@aegis/infra-sdk": "^0.1.0"`
+- Plugins declare the SDK as a dependency: `"@aegis-cli/infra-sdk": "^0.1.0"`
 - SDK patch/minor updates are backward compatible
 - SDK major updates may change the contract version
 
