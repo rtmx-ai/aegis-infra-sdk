@@ -431,7 +431,32 @@ Run `preview` against a real CSP project with ADC credentials. No resources are 
 
 Run the full `up` -> `status` -> `destroy` -> `re-up` cycle against a dedicated test project. These run manually or in a protected CI environment with live credentials.
 
-## 11. Packaging for Distribution
+## 11. Packaging and Distribution
+
+### plugin.json (required in repo root)
+
+Every plugin repo must contain a `plugin.json` in the root directory:
+
+```json
+{
+  "aegis-plugin": true,
+  "contract": "aegis-infra/v1",
+  "name": "gcp-assured-workloads",
+  "description": "IL4/IL5 Assured Workloads boundary in Google Cloud",
+  "binary-prefix": "gcp-assured-workloads"
+}
+```
+
+This file is fetched by aegis-cli via the GitHub API before any binary download. It serves as the repo-level proof that this is a valid aegis plugin.
+
+### Users install plugins by GitHub repo URL
+
+```bash
+aegis plugin install github.com/your-org/your-plugin
+aegis plugin install github.com/your-org/your-plugin@v1.0.0  # specific version
+```
+
+There is no central registry. The plugin's identity is its GitHub repo. aegis-cli validates `plugin.json`, downloads the platform binary from GitHub Releases, verifies the checksum and cosign signature, and places it in `~/.aegis/plugins/`.
 
 ### Development (requires Node.js >= 22)
 
@@ -443,16 +468,32 @@ node dist/index.js manifest
 ### Production (bundled single binary)
 
 ```bash
-# Using bun
 bun build src/index.ts --compile --outfile gcp-assured-workloads
-
-# Using pkg
-npx pkg dist/index.js --targets node22-linux-x64,node22-macos-arm64,node22-win-x64
 ```
 
 The binary must respond to `manifest` with no network access. The manifest is a static JSON object.
 
-Place the binary in `~/.aegis/plugins/` for aegis-cli to discover it.
+### Release asset naming convention
+
+Each GitHub Release must contain:
+- `{binary-prefix}-darwin-arm64` -- macOS Apple Silicon
+- `{binary-prefix}-darwin-x64` -- macOS Intel
+- `{binary-prefix}-linux-x64` -- Linux x64
+- `{binary-prefix}-linux-arm64` -- Linux ARM
+- `{binary-prefix}-windows-x64.exe` -- Windows
+- `SHA256SUMS.txt` -- checksums for all binaries
+- `{binary-prefix}-{platform}.bundle` -- cosign signature bundle per binary
+
+### Cosign signing (keyless, via GitHub Actions OIDC)
+
+Your release workflow signs each binary with Sigstore cosign:
+
+```yaml
+- uses: sigstore/cosign-installer@v3
+- run: cosign sign-blob --yes --bundle {binary}.bundle {binary}
+```
+
+aegis-cli verifies the signature confirms the binary was built by your repo's CI, not by an impersonator.
 
 ## 12. Release Process
 
