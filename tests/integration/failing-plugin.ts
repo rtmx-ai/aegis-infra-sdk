@@ -57,6 +57,12 @@ const healthChecker: HealthChecker = {
         { name: "check_b", status: "fail", detail: "KMS key disabled" },
       ];
     }
+    if (FAIL_MODE === "health_warn") {
+      return [
+        { name: "check_a", status: "pass", detail: "ok" },
+        { name: "check_b", status: "warn", detail: "Insufficient permissions: 403" },
+      ];
+    }
     if (FAIL_MODE === "health_error") throw new Error("Health check crashed");
     return [
       { name: "check_a", status: "pass", detail: "ok" },

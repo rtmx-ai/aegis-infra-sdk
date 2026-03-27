@@ -1,6 +1,8 @@
 /**
  * Integration tests for the SDK -- runs the mock plugin as a real subprocess
  * and validates protocol output on stdout.
+ *
+ * @req REQ-SDK-001, REQ-SDK-002
  */
 
 import { describe, it, expect } from "vitest";
@@ -12,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const exec = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MOCK_PLUGIN = path.join(__dirname, "mock-plugin.ts");
+const FAILING_PLUGIN = path.join(__dirname, "failing-plugin.ts");
 const TSX = path.join(__dirname, "../../node_modules/.bin/tsx");
 
 async function runPlugin(
@@ -208,5 +211,182 @@ describe("protocol compliance", () => {
         expect(() => JSON.parse(line), `Invalid JSON in ${cmd}: ${line}`).not.toThrow();
       }
     }
+  });
+});
+
+// --- REQ-SDK-001: Plugin Packaging Convention and Input Design ---
+
+async function runFailingPlugin(
+  args: string[],
+  failMode: string,
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  try {
+    const result = await exec(TSX, [FAILING_PLUGIN, ...args], {
+      timeout: 30000,
+      env: { ...process.env, FAIL_MODE: failMode },
+    });
+    return { stdout: result.stdout, stderr: result.stderr, exitCode: 0 };
+  } catch (err) {
+    const e = err as { stdout?: string; stderr?: string; code?: number };
+    return {
+      stdout: e.stdout ?? "",
+      stderr: e.stderr ?? "",
+      exitCode: e.code ?? 1,
+    };
+  }
+}
+
+describe("manifest input schema (REQ-SDK-001)", () => {
+  it("inputs include type metadata", async () => {
+    const { stdout } = await runPlugin(["manifest"]);
+    const manifest = JSON.parse(stdout.trim());
+    for (const input of manifest.requires.inputs) {
+      expect(input).toHaveProperty("name");
+      expect(input).toHaveProperty("type");
+    }
+  });
+
+  it("required inputs are marked required", async () => {
+    const { stdout } = await runPlugin(["manifest"]);
+    const manifest = JSON.parse(stdout.trim());
+    const targetId = manifest.requires.inputs.find(
+      (i: { name: string }) => i.name === "target_id",
+    );
+    expect(targetId.required).toBe(true);
+  });
+
+  it("optional inputs have default values", async () => {
+    const { stdout } = await runPlugin(["manifest"]);
+    const manifest = JSON.parse(stdout.trim());
+    const region = manifest.requires.inputs.find(
+      (i: { name: string }) => i.name === "region",
+    );
+    expect(region.default).toBe("us-mock-1");
+    expect(region.required).toBeUndefined();
+  });
+
+  it("manifest declares credentials", async () => {
+    const { stdout } = await runPlugin(["manifest"]);
+    const manifest = JSON.parse(stdout.trim());
+    expect(manifest.requires.credentials).toContain("mock-cred");
+  });
+
+  it("manifest includes description", async () => {
+    const { stdout } = await runPlugin(["manifest"]);
+    const manifest = JSON.parse(stdout.trim());
+    expect(manifest.description).toBe("Mock plugin for integration testing");
+  });
+
+  it("outputs declare names in manifest", async () => {
+    const { stdout } = await runPlugin(["manifest"]);
+    const manifest = JSON.parse(stdout.trim());
+    const outputNames = manifest.provides.outputs.map((o: { name: string }) => o.name);
+    expect(outputNames).toEqual(expect.arrayContaining(["endpoint", "key_id"]));
+  });
+});
+
+// --- REQ-SDK-002: Plugin Developer Best Practices ---
+
+describe("protocol event structure (REQ-SDK-002)", () => {
+  it("all events have a type field", async () => {
+    const { stdout } = await runPlugin(["up", "--input", '{"target_id":"test-123"}']);
+    const events = parseLines(stdout);
+    for (const event of events) {
+      expect(event).toHaveProperty("type");
+    }
+  });
+
+  it("diagnostic events have severity field", async () => {
+    const { stdout } = await runPlugin(["up", "--input", '{"target_id":"test-123"}']);
+    const events = parseLines(stdout) as any[];
+    const diagnostics = events.filter((e) => e.type === "diagnostic");
+    expect(diagnostics.length).toBeGreaterThan(0);
+    for (const d of diagnostics) {
+      expect(["info", "warning", "error"]).toContain(d.severity);
+    }
+  });
+
+  it("check events have name, status, and detail", async () => {
+    const { stdout } = await runPlugin(["status", "--input", '{"target_id":"test-123"}']);
+    const events = parseLines(stdout) as any[];
+    const checks = events.filter((e) => e.type === "check");
+    expect(checks.length).toBeGreaterThan(0);
+    for (const c of checks) {
+      expect(c).toHaveProperty("name");
+      expect(c).toHaveProperty("status");
+      expect(c).toHaveProperty("detail");
+      expect(["pass", "fail", "warn"]).toContain(c.status);
+    }
+  });
+
+  it("result event has success boolean", async () => {
+    const { stdout } = await runPlugin(["up", "--input", '{"target_id":"test-123"}']);
+    const events = parseLines(stdout) as any[];
+    const result = events.find((e) => e.type === "result");
+    expect(result).toBeDefined();
+    expect(typeof result.success).toBe("boolean");
+  });
+
+  it("successful result includes outputs", async () => {
+    const { stdout } = await runPlugin(["up", "--input", '{"target_id":"test-123"}']);
+    const events = parseLines(stdout) as any[];
+    const result = events.find((e) => e.type === "result");
+    expect(result.success).toBe(true);
+    expect(result.outputs).toBeDefined();
+    expect(Object.keys(result.outputs).length).toBeGreaterThan(0);
+  });
+
+  it("failed result includes error string", async () => {
+    const { stdout } = await runPlugin(["up", "--input", "{}"]);
+    const events = parseLines(stdout) as any[];
+    const result = events.find((e) => e.type === "result");
+    expect(result.success).toBe(false);
+    expect(typeof result.error).toBe("string");
+    expect(result.error.length).toBeGreaterThan(0);
+  });
+
+  it("exactly one result event per invocation", async () => {
+    for (const cmd of ["manifest", "preview", "up", "status"]) {
+      const args = cmd === "manifest" ? [cmd] : [cmd, "--input", '{"target_id":"test-123"}'];
+      const { stdout } = await runPlugin(args);
+      const lines = stdout.trim().split("\n").filter((l) => l.length > 0);
+      const parsed = lines.map((l) => JSON.parse(l));
+      if (cmd === "manifest") {
+        // manifest outputs a single JSON object, not protocol events
+        expect(lines).toHaveLength(1);
+      } else {
+        const results = parsed.filter((e: any) => e.type === "result");
+        expect(results, `${cmd} should emit exactly one result`).toHaveLength(1);
+      }
+    }
+  });
+});
+
+describe("health check status values (REQ-SDK-002)", () => {
+  it("health checks can report warn status", async () => {
+    const { stdout, exitCode } = await runFailingPlugin(
+      ["status", "--input", '{"target_id":"test"}'],
+      "health_warn",
+    );
+    expect(exitCode).toBe(0);
+    const events = (stdout.trim().split("\n").filter((l) => l.length > 0)).map(
+      (l) => JSON.parse(l),
+    );
+    const checks = events.filter((e: any) => e.type === "check");
+    const warns = checks.filter((c: any) => c.status === "warn");
+    expect(warns.length).toBeGreaterThan(0);
+    expect(warns[0].detail).toContain("permissions");
+  });
+
+  it("warn checks do not make result success false", async () => {
+    const { stdout } = await runFailingPlugin(
+      ["status", "--input", '{"target_id":"test"}'],
+      "health_warn",
+    );
+    const events = (stdout.trim().split("\n").filter((l) => l.length > 0)).map(
+      (l) => JSON.parse(l),
+    );
+    const result = events.find((e: any) => e.type === "result") as any;
+    expect(result.success).toBe(true);
   });
 });
