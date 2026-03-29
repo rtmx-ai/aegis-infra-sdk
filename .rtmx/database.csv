@@ -5,19 +5,11 @@ REQ-SDK-003,DOCS,PLUGIN_GUIDE.md Developer Documentation,manual,manual_review,Ma
 REQ-SDK-004,SDK,Plugin Release and Distribution,manual,manual_verification,Manual,NOT_STARTED,MEDIUM,Phase 2,.rtmx/requirements/SDK/REQ-SDK-004.md
 REQ-SDK-005,SDK,AWS GovCloud Plugin (Future),n/a,n/a,n/a,NOT_STARTED,LOW,Future,.rtmx/requirements/SDK/REQ-SDK-005.md
 REQ-SDK-006,SDK,Azure Government Plugin (Future),n/a,n/a,n/a,NOT_STARTED,LOW,Future,.rtmx/requirements/SDK/REQ-SDK-006.md
-REQ-SDK-007,SDK,SDK Robustness and Validation,src/cli/__tests__/validation.test.ts,validatePluginConfig,Unit Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
-REQ-SDK-007,SDK,SDK Robustness and Validation,src/lifecycle/__tests__/partial-failure.test.ts,enableApis_partial,Unit Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
 REQ-SDK-007,SDK,SDK Robustness and Validation,tests/integration/failure-scenarios.test.ts,failure_scenarios,Integration Test,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-007.md
 REQ-SDK-008,SDK,SDK npm Release Workflow,.github/workflows/release.yml,release_workflow,Manual,COMPLETE,HIGH,Phase 1,.rtmx/requirements/SDK/REQ-SDK-008.md
 REQ-SDK-009,SDK,Plugin Distribution and Verification,manual,three_layer_verification,Manual,PARTIAL,HIGH,Phase 2,.rtmx/requirements/SDK/REQ-SDK-009.md
 REQ-SDK-010,SDK,Plugin Ecosystem Security,src/security/__tests__/manifest-schema.test.ts,validatePluginManifest,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-010.md
-REQ-SDK-010,SDK,Plugin Ecosystem Security,src/security/__tests__/integrity.test.ts,computeFileSha256,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-010.md
 REQ-SDK-011,SDK,Runtime Security Boundaries,src/security/__tests__/output-validation.test.ts,validateOutputValues,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
-REQ-SDK-011,SDK,Runtime Security Boundaries,src/security/__tests__/dependency-check.test.ts,validateSdkPinning,Unit Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
-REQ-SDK-011,SDK,Runtime Security Boundaries,tests/integration/failure-scenarios.test.ts,output_injection,Integration Test,COMPLETE,CRITICAL,Phase 3,.rtmx/requirements/SDK/REQ-SDK-011.md
 REQ-SDK-012,SDK,CI Compliance Enforcement,src/security/__tests__/ci-compliance.test.ts,checkCiCompliance,Unit Test,COMPLETE,HIGH,Phase 3,.rtmx/requirements/SDK/REQ-SDK-012.md
 REQ-SDK-013,DOCS,SDK Documentation Infrastructure,docs/index.mdx,frontmatter_validation,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
-REQ-SDK-013,DOCS,SDK Documentation Infrastructure,CHANGELOG.md,changelog_content,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
-REQ-SDK-013,DOCS,SDK Documentation Infrastructure,CONTRIBUTING.md,contributing_content,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
-REQ-SDK-013,DOCS,SDK Documentation Infrastructure,SECURITY.md,security_content,Manual,COMPLETE,HIGH,Phase 3,.rtmx/requirements/DOCS/REQ-SDK-013.md
 REQ-SDK-014,DOCS,Documentation SDK and Multi-Version Strategy,n/a,n/a,n/a,NOT_STARTED,MEDIUM,Future,.rtmx/requirements/DOCS/REQ-SDK-014.md
